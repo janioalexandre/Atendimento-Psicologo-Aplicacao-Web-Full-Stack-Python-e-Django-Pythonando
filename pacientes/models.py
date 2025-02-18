@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 class Pacientes(models.Model):
     queixa_choices = (
@@ -43,3 +44,11 @@ class Consultas(models.Model):
 
     def __str__(self):
         return self.paciente.nome
+    
+    @property
+    def link_publico(self):
+        return f"http://localhost:8000{reverse('consulta_publica', kwargs={'id': self.id})}"
+
+class Visualizacoes(models.Model):
+    consulta = models.ForeignKey(Consultas, on_delete=models.CASCADE)
+    ip = models.GenericIPAddressField()
