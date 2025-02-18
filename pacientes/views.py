@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Pacientes
+from .models import Pacientes, Tarefas, Consultas
 from django.contrib import messages
 from django.contrib.messages import constants
 
@@ -30,3 +30,44 @@ def pacientes(request):
 
         messages.add_message(request, constants.SUCCESS, 'Paciente adicionado com sucesso')
         return redirect('pacientes')
+
+def paciente_view(request, id):
+    paciente = Pacientes.objects.get(id=id)
+    if request.method == "GET":
+        tarefas = Tarefas.objects.all()
+        consultas = Consultas.objects.filter(paciente=paciente)
+        return render(request, 'paciente.html', {'paciente': paciente, 'tarefas': tarefas, 'consultas': consultas})
+    elif request.method == "POST":
+        humor = request.POST.get('humor')
+        registro_geral = request.POST.get('registro_geral')
+        video = request.FILES.get('video')
+        tarefas = request.POST.getlist('tarefas')
+
+        consulta = Consultas(
+            humor=int(humor),
+            registro_geral=registro_geral,
+            video=video,
+            paciente=paciente
+        )
+        consulta.save()
+
+        for i in tarefas:
+            tarefa = Tarefas.objects.get(id=i)
+            consulta.tarefas.add(tarefa)
+        consulta.save()
+
+        messages.add_message(request, constants.SUCCESS, 'Consulta adicionada com sucesso')
+        return redirect(f'/pacientes/{id}')
+    
+def atualizar_paciente(request, id):
+    paciente = Pacientes.objects.get(id=id)
+    pagamento_em_dia = request.POST.get('pagamento_em_dia')
+    status = True if pagamento_em_dia == 'ativo' else False
+    paciente.pagamento_em_dia = status
+    paciente.save()
+    return redirect(f'/pacientes/{id}')
+
+def excluir_consulta(request, id):
+    consulta = Consultas.objects.get(id=id)
+    consulta.delete()
+    return redirect(f'/pacientes/{consulta.paciente.id}')
