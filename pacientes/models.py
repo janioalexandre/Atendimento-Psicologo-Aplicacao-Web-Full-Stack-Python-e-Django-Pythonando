@@ -49,6 +49,13 @@ class Consultas(models.Model):
     def link_publico(self):
         return f"http://localhost:8000{reverse('consulta_publica', kwargs={'id': self.id})}"
 
+    def views(self):
+        from .models import Visualizacoes
+        views = Visualizacoes.objects.filter(consulta=self)
+        totais = views.count()
+        unicas = views.values('ip').distinct().count()
+        return f'{totais} - {unicas}'
+
 class Visualizacoes(models.Model):
     consulta = models.ForeignKey(Consultas, on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404
-from .models import Pacientes, Tarefas, Consultas
+from .models import Pacientes, Tarefas, Consultas, Visualizacoes
 from django.contrib import messages
 from django.contrib.messages import constants
 
@@ -74,8 +74,15 @@ def excluir_consulta(request, id):
 
 def consulta_publica(request, id):
     consulta = Consultas.objects.get(id=id)
+    
     if not consulta.paciente.pagamento_em_dia:
         raise Http404()
+    
+    view = Visualizacoes(
+        consulta=consulta,
+        ip=request.META.get('REMOTE_ADDR', '')  # Obtém o IP do visitante
+    )
+    view.save()
 
     return render(request, 'consulta_publica.html', {'consulta': consulta})
 
